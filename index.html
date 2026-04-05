@@ -758,7 +758,7 @@ function emailToAsh() {
   body += 'Thanks,\n' + currentTrainee;
 
   const subject = 'Training Update - ' + currentTrainee + ' at ' + pct + '% - ' + new Date().toLocaleDateString();
-  window.open('mailto:' + ASH_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+  window.open('https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(ASH_EMAIL) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
   showToast('Opening email to Ash...');
 }
 
@@ -836,7 +836,7 @@ function reviewerEmailToAsh() {
   body += 'Thanks,\n' + currentRole;
 
   const subject = 'Training Review - ' + currentTrainee + ' at ' + pct + '% - ' + new Date().toLocaleDateString();
-  window.open('mailto:' + ASH_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+  window.open('https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(ASH_EMAIL) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
   showToast('Opening email to Ash...');
 }
 
