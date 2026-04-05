@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Function Staff — Training Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; padding: 30px 20px; }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* ========== LOGIN SCREEN ========== */
+  .login-screen { max-width: 440px; margin: 80px auto; background: #fff; border-radius: 16px; padding: 40px 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+  .login-screen h1 { font-size: 1.8em; color: #1F4E79; margin-bottom: 4px; }
+  .login-screen h2 { font-size: 1.1em; color: #2E75B6; font-weight: 400; margin-bottom: 24px; }
+  .login-screen .divider { width: 50px; height: 3px; background: #2E75B6; margin: 16px auto 24px; }
+  .login-screen p { color: #666; font-size: 0.88em; margin-bottom: 16px; line-height: 1.5; }
+  .login-form { margin-bottom: 24px; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 0.85em; color: #1F4E79; font-weight: 600; margin-bottom: 4px; }
+  .form-group input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9em; }
+  .form-group input[type="text"]:focus { outline: none; border-color: #2E75B6; box-shadow: 0 0 0 2px rgba(46, 117, 182, 0.1); }
+  .role-selection { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+  .role-btn-login { flex: 1; padding: 10px 12px; border: 2px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.8em; font-weight: 600; color: #1F4E79; transition: all 0.2s; }
+  .role-btn-login.selected { border-color: #2E75B6; background: #2E75B6; color: #fff; }
+  .role-btn-login:hover { border-color: #2E75B6; }
+  .login-btn { width: 100%; padding: 12px 20px; background: #1F4E79; color: #fff; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .login-btn:hover { background: #163859; }
+  .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .login-error { color: #C62828; font-size: 0.8em; margin-top: 8px; }
+  .save-status { position: fixed; top: 10px; right: 10px; background: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.75em; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 50; }
+  .save-status.saving { color: #F9A825; }
+  .save-status.saved { color: #2E7D32; }
+
+  /* ========== HEADER ========== */
+  .header { text-align: center; padding: 30px 20px 20px; margin-bottom: 24px; }
+  .header h1 { font-size: 2em; color: #1F4E79; margin-bottom: 4px; }
+  .header h2 { font-size: 1.2em; color: #2E75B6; font-weight: 400; margin-bottom: 12px; }
+  .header .divider { width: 60px; height: 3px; background: #2E75B6; margin: 12px auto; }
+  .header p { color: #666; font-size: 0.9em; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+  /* Mode banner */
+  .mode-banner { padding: 10px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85em; }
+  .mode-banner.trainee { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .mode-banner.reviewer { background: #FFF3E0; color: #E65100; border: 1px solid #FFCC80; }
+  .mode-banner.admin { background: #EDE7F6; color: #4527A0; border: 1px solid #B39DDB; }
+  .mode-banner strong { margin-right: 8px; }
+  .mode-banner .switch-btn { padding: 4px 14px; border-radius: 6px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+  .mode-banner .switch-btn:hover { opacity: 0.8; }
+
+  /* Trainee selector (admin/reviewer) */
+  .trainee-selector { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: none; }
+  .trainee-selector.show { display: block; }
+  .trainee-selector h3 { font-size: 0.95em; color: #1F4E79; margin-bottom: 10px; }
+  .trainee-selector select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.88em; }
+
+  .quickstart { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid #2E75B6; }
+  .quickstart h3 { font-size: 0.95em; color: #1F4E79; margin-bottom: 8px; }
+  .quickstart ol { padding-left: 20px; font-size: 0.85em; line-height: 1.7; color: #555; }
+
+  .progress-bar-container { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .progress-bar-container h3 { font-size: 0.95em; color: #1F4E79; margin-bottom: 10px; }
+  .progress-bar-outer { background: #e0e0e0; border-radius: 10px; height: 24px; overflow: hidden; }
+  .progress-bar-inner { background: linear-gradient(90deg, #2E75B6, #1F4E79); height: 100%; border-radius: 10px; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.78em; font-weight: 700; min-width: 36px; }
+  .progress-stats { display: flex; gap: 20px; margin-top: 10px; font-size: 0.82em; flex-wrap: wrap; }
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; padding: 14px 18px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); font-size: 0.82em; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  .resources { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .resources h3 { font-size: 0.9em; color: #1F4E79; margin-bottom: 10px; }
+  .resource-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .resource-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 0.82em; font-weight: 600; transition: all 0.2s; }
+  .resource-link:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  .res-sop { background: #E3F2FD; color: #1565C0; }
+  .res-flowchart { background: #E8F5E9; color: #388E3C; }
+  .res-guide { background: #F3E5F5; color: #7B1FA2; }
+  .res-pipeline { background: #FFF3E0; color: #E65100; }
+
+  .chapter { background: #fff; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+  .chapter-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+  .chapter-header:hover { background: #fafbfc; }
+  .chapter-header h3 { font-size: 1.05em; color: #1F4E79; display: flex; align-items: center; gap: 10px; }
+  .chapter-header .badge { padding: 3px 10px; border-radius: 10px; font-size: 0.72em; font-weight: 700; color: #fff; }
+  .chapter-header .ch-progress { font-size: 0.75em; color: #999; font-weight: 400; }
+  .chapter-header .toggle { font-size: 1.2em; color: #999; transition: transform 0.3s; }
+  .chapter.open .toggle { transform: rotate(180deg); }
+  .chapter-body { padding: 0 20px 16px; display: none; }
+  .chapter.open .chapter-body { display: block; }
+
+  .skill-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+  .skill-row:last-child { border-bottom: none; }
+  .skill-check { width: 20px; height: 20px; accent-color: #2E75B6; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+  .skill-info { flex: 1; }
+  .skill-name { font-size: 0.9em; font-weight: 600; color: #333; }
+  .skill-desc { font-size: 0.78em; color: #888; margin-top: 3px; line-height: 1.4; }
+  .skill-links { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .skill-links a, .skill-links span { font-size: 0.72em; padding: 3px 10px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .link-sop { background: #E3F2FD; color: #1565C0; cursor: pointer; }
+  .link-sop:hover { background: #BBDEFB; }
+  .link-video.coming { background: #f5f5f5; color: #999; font-style: italic; }
+  .link-flowchart { background: #E8F5E9; color: #388E3C; cursor: pointer; }
+  .link-flowchart:hover { background: #C8E6C9; }
+  .link-guide { background: #F3E5F5; color: #7B1FA2; cursor: pointer; }
+  .link-guide:hover { background: #E1BEE7; }
+
+  .confidence { display: flex; gap: 4px; flex-shrink: 0; margin-top: 2px; }
+  .conf-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7em; font-weight: 700; color: #999; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+  .conf-btn:hover { border-color: #2E75B6; }
+  .conf-btn.selected-1 { background: #FFCDD2; border-color: #C62828; color: #C62828; }
+  .conf-btn.selected-2 { background: #FFF9C4; border-color: #F9A825; color: #F9A825; }
+  .conf-btn.selected-3 { background: #C8E6C9; border-color: #2E7D32; color: #2E7D32; }
+
+  /* Read-only overrides */
+  .readonly .skill-check { pointer-events: none; opacity: 0.7; }
+  .readonly .conf-btn { pointer-events: none; }
+  .readonly .notes-section textarea { pointer-events: none; background: #f9f9f9; }
+
+  .notes-section { background: #fff; border-radius: 12px; padding: 20px 24px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .notes-section h3 { font-size: 0.95em; color: #1F4E79; margin-bottom: 10px; }
+  .notes-section textarea { width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.88em; resize: vertical; line-height: 1.5; }
+
+  .reviewer-notes { background: #fff; border-radius: 12px; padding: 20px 24px; margin-top: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid #E65100; display: none; }
+  .reviewer-notes.show { display: block; }
+  .reviewer-notes h3 { font-size: 0.95em; color: #E65100; margin-bottom: 10px; }
+
+  .actions { display: flex; gap: 10px; margin-top: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn { padding: 10px 24px; border-radius: 8px; border: none; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: #1F4E79; color: #fff; }
+  .btn-secondary { background: #e0e0e0; color: #333; }
+  .btn-email { background: #2E75B6; color: #fff; }
+  .btn-import { background: #388E3C; color: #fff; }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .save-notice { text-align: center; font-size: 0.78em; color: #999; margin-top: 8px; line-height: 1.5; }
+
+  .save-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1F4E79; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 0.85em; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
+  .save-toast.show { opacity: 1; }
+
+  /* Locked chapter gate */
+  .chapter-locked { position: relative; opacity: 0.5; pointer-events: none; }
+  .chapter-locked .chapter-body { display: none !important; }
+  .lock-gate { background: linear-gradient(135deg, #f5f5f5, #e8e8e8); border-radius: 0 0 12px 12px; padding: 24px; text-align: center; display: none; }
+  .chapter-locked .lock-gate { display: block; pointer-events: auto; }
+  .lock-gate .lock-icon { font-size: 2em; margin-bottom: 8px; }
+  .lock-gate h4 { color: #666; font-size: 0.95em; margin-bottom: 6px; }
+  .lock-gate p { color: #999; font-size: 0.82em; }
+
+  .hidden { display: none !important; }
+
+  @media print { .actions, .save-notice, .save-toast, .mode-banner, .login-screen, .save-status { display: none; } .chapter-body { display: block !important; } }
+  @media (max-width: 600px) { .skill-row { flex-wrap: wrap; } .confidence { width: 100%; justify-content: flex-start; margin-top: 8px; } .progress-stats { flex-direction: column; gap: 6px; } }
+</style>
+</head>
+<body>
+
+<!-- Save Status Indicator -->
+<div id="saveStatus" class="save-status">Not connected</div>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="loginScreen" class="login-screen">
+  <h1>Function Staff</h1>
+  <h2>Training Dashboard</h2>
+  <div class="divider"></div>
+  <p>Welcome! Log in to continue your training.</p>
+  <div class="login-form">
+    <div class="form-group">
+      <label for="nameInput">Your Name</label>
+      <input type="text" id="nameInput" placeholder="Enter your full name">
+    </div>
+    <div class="form-group">
+      <label>Your Role</label>
+      <div class="role-selection">
+        <button class="role-btn-login selected" data-role="trainee">Trainee</button>
+        <button class="role-btn-login" data-role="reviewer">Reviewer</button>
+        <button class="role-btn-login" data-role="admin">Admin</button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="handleLogin()">Log In</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+  <p style="margin-top:16px;font-size:0.75em;color:#bbb;">v2.0 — Cloud-hosted training dashboard. Data saved to Google Sheets.</p>
+</div>
+
+<!-- ==================== MAIN DASHBOARD ==================== -->
+<div id="dashboard" class="container hidden">
+
+<div class="header">
+  <h1>Function Staff</h1>
+  <h2>Training Dashboard</h2>
+  <div class="divider"></div>
+  <p id="headerDesc"></p>
+</div>
+
+<div id="modeBanner" class="mode-banner trainee">
+  <div><strong id="bannerRole"></strong> <span id="bannerDesc"></span></div>
+  <button class="switch-btn" onclick="switchUser()">Switch User</button>
+</div>
+
+<!-- Trainee selector for Admin/Reviewer -->
+<div id="traineeSelector" class="trainee-selector">
+  <h3>Select Trainee</h3>
+  <select id="traineeDropdown" onchange="loadSelectedTrainee()">
+    <option value="">Loading trainees...</option>
+  </select>
+</div>
+
+<!-- TRAINEE QUICKSTART -->
+<div id="quickstartBlock" class="quickstart">
+  <h3>How to use this dashboard</h3>
+  <ol>
+    <li><strong>Open a chapter</strong> by clicking its header. Read through each skill.</li>
+    <li><strong>Click the blue SOP links</strong> to open the written procedure (Word docs in the same folder).</li>
+    <li><strong>Click green Flowchart links</strong> to open visual flowcharts in your browser.</li>
+    <li><strong>Click purple Guide links</strong> for detailed system info.</li>
+    <li><strong>Rate your confidence</strong> using 1-2-3: <strong>1</strong> = need training, <strong>2</strong> = partially confident, <strong>3</strong> = confident.</li>
+    <li><strong>Tick the checkbox</strong> once you've read the SOP and understand the skill.</li>
+    <li>Video links marked <em>"Coming soon"</em> will be replaced with Loom recordings as Ash records them.</li>
+    <li>Write questions in the <strong>notes box</strong> at the bottom.</li>
+    <li>Click <strong>Send Update to Ash</strong> to email your progress and notes directly.</li>
+  </ol>
+</div>
+
+<!-- REVIEWER QUICKSTART -->
+<div id="reviewerQuickstart" class="quickstart hidden" style="border-left-color: #E65100;">
+  <h3>Reviewer mode</h3>
+  <ol>
+    <li id="viewingDesc">You're viewing a trainee's progress in read-only mode. Checkboxes and ratings can't be changed.</li>
+    <li>Use the <strong>Reviewer Notes</strong> section at the bottom to leave your own feedback.</li>
+    <li>Click <strong>Send Notes to Ash</strong> to email your feedback.</li>
+  </ol>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar-container">
+  <h3>Overall Training Progress</h3>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progressBar" style="width:0%">0%</div>
+  </div>
+  <div class="progress-stats">
+    <div class="stat"><div class="stat-dot" style="background:#C62828;"></div> <span id="countRed">0</span> Need Training</div>
+    <div class="stat"><div class="stat-dot" style="background:#F9A825;"></div> <span id="countAmber">0</span> Partially Confident</div>
+    <div class="stat"><div class="stat-dot" style="background:#2E7D32;"></div> <span id="countGreen">0</span> Confident</div>
+    <div class="stat"><div class="stat-dot" style="background:#ddd;"></div> <span id="countNone">0</span> Not Rated</div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="conf-btn selected-1" style="width:20px;height:20px;font-size:0.6em;pointer-events:none;">1</div> Need training</div>
+  <div class="legend-item"><div class="conf-btn selected-2" style="width:20px;height:20px;font-size:0.6em;pointer-events:none;">2</div> Partially confident</div>
+  <div class="legend-item"><div class="conf-btn selected-3" style="width:20px;height:20px;font-size:0.6em;pointer-events:none;">3</div> Confident</div>
+  <div class="legend-item"><span class="link-sop" style="pointer-events:none;">SOP</span> Written procedure</div>
+  <div class="legend-item"><span style="background:#E8F5E9;color:#388E3C;padding:3px 10px;border-radius:6px;font-size:0.72em;pointer-events:none;">Flowchart</span> Visual guide</div>
+  <div class="legend-item"><span class="link-video coming" style="pointer-events:none;">Video</span> Loom (coming soon)</div>
+  <div class="legend-item"><span style="background:#F3E5F5;color:#7B1FA2;padding:3px 10px;border-radius:6px;font-size:0.72em;pointer-events:none;">Guide</span> Systems reference</div>
+</div>
+
+<!-- RESOURCES -->
+<div class="resources">
+  <h3>Quick Access — All Reference Documents</h3>
+  <div class="resource-grid">
+    <a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="resource-link res-sop">SOP 1: Recruiting</a>
+    <a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="resource-link res-sop">SOP 2: Onboarding</a>
+    <a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="resource-link res-sop">SOP 3: Scheduling</a>
+    <a href="#" class="resource-link res-sop" style="opacity:0.4;pointer-events:none;">SOP 4: Coming Soon</a>
+    <a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="resource-link res-flowchart">All Flowcharts</a>
+    <a href="https://drive.google.com/file/d/1xQ7iiTBO-R8_F0sKfhrsoFN2nuZM9iSC/view?usp=drive_link" target="_blank" class="resource-link res-pipeline">Master Pipeline</a>
+    <a href="https://docs.google.com/document/d/1jd2lYn1Et5sYEdpZrDZOnjjnHnJAuoo4/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="resource-link res-guide">Systems & Tools Guide</a>
+  </div>
+</div>
+
+<!-- ==================== CHAPTERS ==================== -->
+<div id="chapters">
+
+<!-- CH1 -->
+<div class="chapter open" data-chapter="recruiting">
+  <div class="chapter-header" onclick="toggleChapter(this)">
+    <h3><span class="badge" style="background:#388E3C;">CH 1</span> Recruiting <span class="ch-progress" data-ch="recruiting"></span></h3>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="chapter-body">
+    <div class="skill-row" data-skill="rec-1"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Checking Student Job Search for candidates</div><div class="skill-desc">Weekly check of SJS ads, screening CVs for hospitality experience and right to work in NZ.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 1: Recruiting</a><span class="link-video coming" data-video="VID-01">VID-01: Coming soon</span></div></div><div class="confidence" data-skill="rec-1"></div></div>
+    <div class="skill-row" data-skill="rec-2"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Checking Seek ads for candidates</div><div class="skill-desc">Review active Seek ads (loaded by Amanda when demand is high). Amanda controls ad budget.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 1: Recruiting</a><span class="link-video coming" data-video="VID-02">VID-02: Coming soon</span></div></div><div class="confidence" data-skill="rec-2"></div></div>
+    <div class="skill-row" data-skill="rec-3"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Screening for right to work in NZ</div><div class="skill-desc">Check for NZ citizenship, residency, or valid work visa. Screen out those without right to work.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 1: Recruiting</a></div></div><div class="confidence" data-skill="rec-3"></div></div>
+    <div class="skill-row" data-skill="rec-4"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Checking StaffConnect for past/blocked staff</div><div class="skill-desc">Search before contacting. Active/expired/suspended/blocked. Blocked = do not proceed.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 1: Recruiting</a><span class="link-video coming" data-video="VID-03">VID-03: Coming soon</span></div></div><div class="confidence" data-skill="rec-4"></div></div>
+    <div class="skill-row" data-skill="rec-5"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Contacting candidates and directing to website</div><div class="skill-desc">Use outreach template. Direct to functionstaff.co.nz — never to StaffConnect directly.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1ylvMRvhhhyGAuOMs2xc7zsoIDnWmPGgL/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 1: Recruiting</a></div></div><div class="confidence" data-skill="rec-5"></div></div>
+  </div>
+</div>
+
+<!-- CH2 -->
+<div class="chapter" data-chapter="onboarding">
+  <div class="chapter-header" onclick="toggleChapter(this)">
+    <h3><span class="badge" style="background:#1565C0;">CH 2</span> Staff Onboarding <span class="ch-progress" data-ch="onboarding"></span></h3>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="chapter-body">
+    <div class="skill-row" data-skill="onb-1"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Reviewing registrants in StaffConnect</div><div class="skill-desc">Complete vs incomplete. Assess suitability for hospitality, events, warehousing.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Recruiting & Onboarding</a><span class="link-video coming" data-video="VID-04">VID-04: Coming soon</span></div></div><div class="confidence" data-skill="onb-1"></div></div>
+    <div class="skill-row" data-skill="onb-2"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Following up on incomplete registrants</div><div class="skill-desc">Weekly incomplete list. Follow up for missing details. Two attempts then courtesy decline.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a></div></div><div class="confidence" data-skill="onb-2"></div></div>
+    <div class="skill-row" data-skill="onb-3"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Booking interviews via Calendly</div><div class="skill-desc">Book with Amanda or Athul via their Calendly links. Every suitable registrant gets an interview.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a><span class="link-video coming" data-video="VID-05">VID-05: Coming soon</span></div></div><div class="confidence" data-skill="onb-3"></div></div>
+    <div class="skill-row" data-skill="onb-4"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Documentation check (IR330, agreement, CV, visa, bank)</div><div class="skill-desc">5 required docs. Employment agreement MUST be signed BEFORE first shift.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a><a href="https://docs.google.com/document/d/1jd2lYn1Et5sYEdpZrDZOnjjnHnJAuoo4/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-guide">Systems Guide: StaffConnect</a><span class="link-video coming" data-video="VID-06">VID-06: Coming soon</span></div></div><div class="confidence" data-skill="onb-4"></div></div>
+    <div class="skill-row" data-skill="onb-5"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Sending app walkthrough video to new staff</div><div class="skill-desc">After docs complete, send YouTube link for Function Staff App.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a></div></div><div class="confidence" data-skill="onb-5"></div></div>
+    <div class="skill-row" data-skill="onb-6"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Sending decline / courtesy messages</div><div class="skill-desc">Professional decline. Leave the door open where appropriate.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1YQbYn3f2IOtRovwCRwdPfWFy_TKBt0rr/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 2: Onboarding</a></div></div><div class="confidence" data-skill="onb-6"></div></div>
+  </div>
+</div>
+
+<!-- CH3 -->
+<div class="chapter" data-chapter="scheduling">
+  <div class="chapter-header" onclick="toggleChapter(this)">
+    <h3><span class="badge" style="background:#E65100;">CH 3</span> Scheduling &amp; Placement <span class="ch-progress" data-ch="scheduling"></span></h3>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="chapter-body">
+    <div class="skill-row" data-skill="sch-1"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Checking Timesheet Portals for new requirements</div><div class="skill-desc">Check each client's requirements tab. Type/number/times/site. Contact immediately if unclear. Build same day.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Requirements Review</a><span class="link-video coming" data-video="VID-07">VID-07: Coming soon</span></div></div><div class="confidence" data-skill="sch-1"></div></div>
+    <div class="skill-row" data-skill="sch-2"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Building shifts in StaffConnect calendar</div><div class="skill-desc">Create shifts with correct date, time, site, role, number. Always from a real requirement. Core function.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Shift Building</a><span class="link-video coming" data-video="VID-08">VID-08: Coming soon</span></div></div><div class="confidence" data-skill="sch-2"></div></div>
+    <div class="skill-row" data-skill="sch-3"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Setting filters and inviting out to staff</div><div class="skill-desc">Set filters, invite out. 400+ invites is normal. NO shortlists. Staff apply, Amanda/Athul select.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Shift Building</a><span class="link-video coming" data-video="VID-09">VID-09: Coming soon</span></div></div><div class="confidence" data-skill="sch-3"></div></div>
+    <div class="skill-row" data-skill="sch-4"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Reading the calendar colours (17-status system)</div><div class="skill-desc">Ignore greens. Action reds/yellows/oranges. KPI: confirmed green 3+ days before shift.</div><div class="skill-links"><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Calendar Colour Legend</a><a href="https://docs.google.com/document/d/1jd2lYn1Et5sYEdpZrDZOnjjnHnJAuoo4/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-guide">Systems Guide: Full Colour Table</a><span class="link-video coming" data-video="VID-10">VID-10: Coming soon</span></div></div><div class="confidence" data-skill="sch-4"></div></div>
+    <div class="skill-row" data-skill="sch-5"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Entering confirmed staff names into Timesheet Portal</div><div class="skill-desc">Enter names into correct day tab after selection. Spelling accuracy critical — feeds payroll.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><span class="link-video coming" data-video="VID-11">VID-11: Coming soon</span></div></div><div class="confidence" data-skill="sch-5"></div></div>
+    <div class="skill-row" data-skill="sch-6"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Sending confirmation emails to clients</div><div class="skill-desc">Confirmed names + arrival times. Use template. Important for Sky City / NZICC (security loading).</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a></div></div><div class="confidence" data-skill="sch-6"></div></div>
+    <div class="skill-row" data-skill="sch-7"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Handling urgent requests (within 4-6 hours)</div><div class="skill-desc">Highest priority — drop everything. Build immediately, direct email + SMS.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Urgency Tiers</a></div></div><div class="confidence" data-skill="sch-7"></div></div>
+    <div class="skill-row" data-skill="sch-8"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Handling cancellations</div><div class="skill-desc">Apology to staff, cancel in StaffConnect, offer alternatives. 24hr cancellation fee policy.</div><div class="skill-links"><a href="https://docs.google.com/document/d/1CJSdT5XB-QUuFVrnqZAnElqYtJ-YV8Uw/edit?usp=drive_link&ouid=116627201644858418226&rtpof=true&sd=true" target="_blank" class="link-sop">SOP 3: Scheduling</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Cancellation Path</a></div></div><div class="confidence" data-skill="sch-8"></div></div>
+    <div class="skill-row" data-skill="sch-9"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Handling replacement requests</div><div class="skill-desc">Yellow on calendar. 2+ from same staff = blacklist discussion. Short notice = query and flag.</div><div class="skill-links"><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Replacement Handling</a></div></div><div class="confidence" data-skill="sch-9"></div></div>
+    <div class="skill-row" data-skill="sch-10"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Updating staff profiles from client feedback</div><div class="skill-desc">5-star = Preferred filter. Negative = note + screen-out for that client.</div><div class="skill-links"><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Profile Maintenance</a><span class="link-video coming" data-video="VID-13">VID-13: Coming soon</span></div></div><div class="confidence" data-skill="sch-10"></div></div>
+  </div>
+</div>
+
+<!-- CH4 — LOCKED until Ch1-3 complete -->
+<div class="chapter chapter-locked" data-chapter="timesheets" id="ch4block">
+  <div class="chapter-header" onclick="toggleChapter(this)">
+    <h3><span class="badge" style="background:#7B1FA2;">CH 4</span> Timesheets &amp; Payroll Support <span class="ch-progress" data-ch="timesheets"></span></h3>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="chapter-body">
+    <div class="skill-row" data-skill="ts-1"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Tuesday client chase — confirmation emails</div><div class="skill-desc">Every Tuesday, chase unconfirmed shifts. Wednesday deadline before Thursday payroll.</div><div class="skill-links"><a href="#" onclick="return false;" class="link-sop">SOP 4: Timesheets & Payroll</a><a href="https://drive.google.com/file/d/1qPfSW0WYuaGr7qh-6rzqMvWHUWuA23Ir/view?usp=drive_link" target="_blank" class="link-flowchart">Flowchart: Timesheet Review</a></div></div><div class="confidence" data-skill="ts-1"></div></div>
+    <div class="skill-row" data-skill="ts-2"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Clicking through confirmations in the portal</div><div class="skill-desc">Click confirm when clients approve. Modified times become the confirmed record.</div><div class="skill-links"><a href="#" onclick="return false;" class="link-sop">SOP 4: Timesheets & Payroll</a><span class="link-video coming" data-video="VID-12">VID-12: Coming soon</span></div></div><div class="confidence" data-skill="ts-2"></div></div>
+    <div class="skill-row" data-skill="ts-3"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Following up on staff check-in/check-out</div><div class="skill-desc">Contact staff who don't check in/out. Ensure they know how to use the app.</div><div class="skill-links"><a href="#" onclick="return false;" class="link-sop">SOP 4: Timesheets & Payroll</a></div></div><div class="confidence" data-skill="ts-3"></div></div>
+    <div class="skill-row" data-skill="ts-4"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Post-payroll queries — holiday pay</div><div class="skill-desc">Published rate INCLUDES 8% holiday pay, shown separately on payslip. Use explanation template.</div><div class="skill-links"><a href="#" onclick="return false;" class="link-sop">SOP 4: Timesheets & Payroll</a></div></div><div class="confidence" data-skill="ts-4"></div></div>
+    <div class="skill-row" data-skill="ts-5"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Post-payroll queries — special rates missed</div><div class="skill-desc">Escalate to Athul or Ash. Needs payroll-level access.</div><div class="skill-links"><a href="#" onclick="return false;" class="link-sop">SOP 4: Timesheets & Payroll</a></div></div><div class="confidence" data-skill="ts-5"></div></div>
+  </div>
+  <div class="lock-gate"><div class="lock-icon">&#128274;</div><h4>Coming Soon — Complete Chapters 1-3 First</h4><p>Timesheets &amp; Payroll will unlock once you've completed Recruiting, Onboarding, and Scheduling.</p></div>
+</div>
+
+<!-- ONGOING — LOCKED until Ch1-3 complete -->
+<div class="chapter chapter-locked" data-chapter="database" id="dbblock">
+  <div class="chapter-header" onclick="toggleChapter(this)">
+    <h3><span class="badge" style="background:#546E7A;">ONGOING</span> Database Health &amp; Maintenance <span class="ch-progress" data-ch="database"></span></h3>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="chapter-body">
+    <div class="skill-row" data-skill="db-1"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">Weekly database health report</div><div class="skill-desc">Export by skill category. Check pool sizes and last shift worked. Identifies shortages.</div><div class="skill-links"><a href="https://drive.google.com/file/d/1xQ7iiTBO-R8_F0sKfhrsoFN2nuZM9iSC/view?usp=drive_link" target="_blank" class="link-flowchart">Pipeline: Database Health</a><span class="link-video coming" data-video="VID-14">VID-14: Coming soon</span></div></div><div class="confidence" data-skill="db-1"></div></div>
+    <div class="skill-row" data-skill="db-2"><input type="checkbox" class="skill-check" onchange="updateProgress()"><div class="skill-info"><div class="skill-name">4-month inactivity outreach</div><div class="skill-desc">Contact inactive 4+ months. Keep or suspend after two attempts. Saves subscription cost.</div><div class="skill-links"><a href="https://drive.google.com/file/d/1xQ7iiTBO-R8_F0sKfhrsoFN2nuZM9iSC/view?usp=drive_link" target="_blank" class="link-flowchart">Pipeline: Database Health</a></div></div><div class="confidence" data-skill="db-2"></div></div>
+  </div>
+  <div class="lock-gate"><div class="lock-icon">&#128274;</div><h4>Coming Soon — Complete Chapters 1-3 First</h4><p>Database Health &amp; Maintenance will unlock once you've completed the core chapters.</p></div>
+</div>
+
+</div><!-- end chapters -->
+
+<!-- TRAINEE'S NOTES -->
+<div class="notes-section">
+  <h3 id="notesTitle">Notes / Questions / Training Requests</h3>
+  <textarea id="aprilNotes" placeholder="Write any questions, areas you'd like more training on, or things unclear. Mention the video ID (e.g. VID-08) so Ash knows which area."></textarea>
+</div>
+
+<!-- REVIEWER NOTES -->
+<div id="reviewerNotesBlock" class="reviewer-notes">
+  <h3>Your Reviewer Notes (not visible to trainee)</h3>
+  <textarea id="reviewerNotes" placeholder="Add your review observations here. Saved separately from trainee data."></textarea>
+</div>
+
+<!-- ACTIONS: TRAINEE -->
+<div class="actions" id="traineeActions">
+  <button class="btn btn-email" onclick="emailToAsh()">Send Update to Ash</button>
+  <button class="btn btn-secondary" onclick="exportProgress()">Export Progress File</button>
+</div>
+
+<!-- ACTIONS: REVIEWER/ADMIN -->
+<div class="actions hidden" id="reviewerActions">
+  <button class="btn btn-email" onclick="reviewerEmailToAsh()">Send Notes to Ash</button>
+  <button class="btn btn-secondary" onclick="exportReviewerSummary()">Export Summary</button>
+</div>
+
+<div class="save-notice" id="traineeNotice">Progress auto-saves every 3 seconds. Use "Send Update to Ash" to email your progress, or "Export Progress File" to download a .json.</div>
+<div class="save-notice hidden" id="reviewerNotice">Your notes auto-save. Use "Send Notes to Ash" to email feedback. Reviewer notes are saved separately from trainee data.</div>
+
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+<div class="save-toast" id="toast"></div>
+
+</div><!-- end dashboard -->
+
+<script>
+// ==================== CONFIG ====================
+const API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+// ==================== STATE ====================
+let currentRole = null;
+let currentTrainee = null;
+let autoSaveTimer = null;
+const ASH_EMAIL = 'ash@nex.co.nz';
+
+// ==================== LOGIN ====================
+document.querySelectorAll('.role-btn-login').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.role-btn-login').forEach(b => b.classList.remove('selected'));
+    this.classList.add('selected');
+  });
+});
+
+async function handleLogin() {
+  const name = document.getElementById('nameInput').value.trim();
+  const role = document.querySelector('.role-btn-login.selected').dataset.role;
+  const errorEl = document.getElementById('loginError');
+
+  if (!name) {
+    errorEl.textContent = 'Please enter your name';
+    return;
+  }
+
+  errorEl.textContent = '';
+  updateSaveStatus('Logging in...', 'saving');
+
+  try {
+    if (role === 'trainee') {
+      const response = await fetch(API_URL + '?action=load&name=' + encodeURIComponent(name));
+      const data = await response.json();
+      if (data.success) {
+        currentRole = 'trainee';
+        currentTrainee = name;
+        enterDashboard();
+        applyState(data.data);
+      }
+    } else {
+      // For reviewer/admin, load the trainee list
+      currentRole = role;
+      enterDashboard();
+      if (role !== 'trainee') {
+        await populateTraineeList();
+      }
+    }
+  } catch (e) {
+    errorEl.textContent = 'Error: Could not connect to server. Check API_URL.';
+    updateSaveStatus('Connection failed', 'error');
+    console.error('Login error:', e);
+  }
+}
+
+function enterDashboard() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  const dash = document.getElementById('dashboard');
+  dash.classList.remove('hidden');
+
+  // Hide all sections first
+  ['traineeActions','reviewerActions','traineeNotice','reviewerNotice','quickstartBlock','reviewerQuickstart','reviewerNotesBlock','traineeSelector'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+
+  if (currentRole === 'trainee') {
+    document.getElementById('modeBanner').className = 'mode-banner trainee';
+    document.getElementById('bannerRole').textContent = currentTrainee + ' — Trainee Mode';
+    document.getElementById('bannerDesc').textContent = 'Your changes auto-save.';
+    document.getElementById('headerDesc').textContent = 'Welcome, ' + currentTrainee + '! Work through each chapter, read the SOPs, rate your confidence, and tick off skills. Your progress is saved automatically.';
+    document.getElementById('quickstartBlock').classList.remove('hidden');
+    document.getElementById('traineeActions').classList.remove('hidden');
+    document.getElementById('traineeNotice').classList.remove('hidden');
+    document.getElementById('notesTitle').textContent = 'My Notes / Questions / Training Requests';
+    dash.classList.remove('readonly');
+  } else if (currentRole === 'reviewer') {
+    document.getElementById('modeBanner').className = 'mode-banner reviewer';
+    document.getElementById('bannerRole').textContent = 'Reviewer Mode';
+    document.getElementById('bannerDesc').textContent = 'Review trainee progress and leave feedback.';
+    document.getElementById('headerDesc').textContent = 'Select a trainee to review their progress. Leave notes and send feedback to Ash.';
+    document.getElementById('reviewerQuickstart').classList.remove('hidden');
+    document.getElementById('reviewerNotesBlock').classList.add('show');
+    document.getElementById('reviewerActions').classList.remove('hidden');
+    document.getElementById('reviewerNotice').classList.remove('hidden');
+    document.getElementById('traineeSelector').classList.add('show');
+    document.getElementById('notesTitle').textContent = 'Trainee Notes (read-only)';
+    dash.classList.add('readonly');
+  } else if (currentRole === 'admin') {
+    document.getElementById('modeBanner').className = 'mode-banner admin';
+    document.getElementById('bannerRole').textContent = 'Admin Mode';
+    document.getElementById('bannerDesc').textContent = 'Review all trainee progress.';
+    document.getElementById('headerDesc').textContent = 'Admin view. Select a trainee to review their complete progress. All data is read-only.';
+    document.getElementById('reviewerQuickstart').classList.remove('hidden');
+    document.getElementById('reviewerNotesBlock').classList.add('show');
+    document.getElementById('reviewerActions').classList.remove('hidden');
+    document.getElementById('reviewerNotice').classList.remove('hidden');
+    document.getElementById('traineeSelector').classList.add('show');
+    document.getElementById('notesTitle').textContent = 'Trainee Notes (read-only)';
+    dash.classList.add('readonly');
+  }
+
+  updateProgress();
+  checkChapterLocks();
+  startAutoSave();
+}
+
+async function populateTraineeList() {
+  try {
+    const response = await fetch(API_URL + '?action=list');
+    const data = await response.json();
+    if (data.success && data.trainees) {
+      const select = document.getElementById('traineeDropdown');
+      select.innerHTML = '<option value="">Select a trainee...</option>';
+      data.trainees.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.name;
+        option.textContent = t.name + ' (' + t.percent + '% complete)';
+        select.appendChild(option);
+      });
+    }
+  } catch (e) {
+    console.error('Error loading trainee list:', e);
+  }
+}
+
+async function loadSelectedTrainee() {
+  const name = document.getElementById('traineeDropdown').value;
+  if (!name) return;
+
+  updateSaveStatus('Loading trainee data...', 'saving');
+  try {
+    const response = await fetch(API_URL + '?action=load&name=' + encodeURIComponent(name));
+    const data = await response.json();
+    if (data.success) {
+      currentTrainee = name;
+      document.getElementById('viewingDesc').textContent = "You're viewing " + name + "'s progress in read-only mode. Checkboxes and ratings can't be changed.";
+      applyState(data.data);
+
+      // Load reviewer notes for this trainee
+      const notesResponse = await fetch(API_URL + '?action=loadReviewerNotes&trainee=' + encodeURIComponent(name));
+      const notesData = await notesResponse.json();
+      if (notesData.success && notesData.notes) {
+        const myNotes = notesData.notes[currentRole] || '';
+        document.getElementById('reviewerNotes').value = myNotes;
+      }
+      updateSaveStatus('Loaded', 'saved');
+    }
+  } catch (e) {
+    updateSaveStatus('Error loading trainee', 'error');
+    console.error('Load error:', e);
+  }
+}
+
+function switchUser() {
+  if (currentRole === 'trainee') saveStateQuiet();
+  if (currentRole !== 'trainee') saveReviewerNotes();
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  currentRole = null;
+  currentTrainee = null;
+  stopAutoSave();
+}
+
+// ==================== CHAPTERS ====================
+function toggleChapter(el) { el.parentElement.classList.toggle('open'); }
+
+function updateProgress() {
+  const checks = document.querySelectorAll('.skill-check');
+  const total = checks.length;
+  const done = document.querySelectorAll('.skill-check:checked').length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const bar = document.getElementById('progressBar');
+  bar.style.width = Math.max(pct, 3) + '%';
+  bar.textContent = pct + '%';
+  let red = 0, amber = 0, green = 0, none = 0;
+  document.querySelectorAll('.confidence').forEach(div => {
+    const sel = div.querySelector('.conf-btn[class*="selected-"]');
+    if (!sel || !sel.className.includes('selected-')) none++;
+    else if (sel.className.includes('selected-1')) red++;
+    else if (sel.className.includes('selected-2')) amber++;
+    else if (sel.className.includes('selected-3')) green++;
+  });
+  document.getElementById('countRed').textContent = red;
+  document.getElementById('countAmber').textContent = amber;
+  document.getElementById('countGreen').textContent = green;
+  document.getElementById('countNone').textContent = none;
+  document.querySelectorAll('.chapter').forEach(ch => {
+    const t = ch.querySelectorAll('.skill-check').length;
+    const d = ch.querySelectorAll('.skill-check:checked').length;
+    const label = ch.querySelector('.ch-progress');
+    if (label) label.textContent = '(' + d + '/' + t + ')';
+  });
+}
+
+// Confidence buttons
+document.querySelectorAll('.confidence').forEach(div => {
+  [1,2,3].forEach(level => {
+    const btn = document.createElement('button');
+    btn.className = 'conf-btn';
+    btn.textContent = level;
+    btn.title = level === 1 ? 'Need training' : level === 2 ? 'Partially confident' : 'Confident';
+    btn.onclick = () => {
+      if (currentRole !== 'trainee') return;
+      div.querySelectorAll('.conf-btn').forEach(b => b.className = 'conf-btn');
+      btn.className = 'conf-btn selected-' + level;
+      updateProgress();
+    };
+    div.appendChild(btn);
+  });
+});
+
+// ==================== STATE MANAGEMENT ====================
+function getState() {
+  const state = { checks: {}, confidence: {}, notes: '', exportDate: new Date().toISOString(), exportedBy: currentTrainee };
+  document.querySelectorAll('.skill-row').forEach(row => {
+    const sk = row.dataset.skill;
+    state.checks[sk] = row.querySelector('.skill-check').checked;
+    const sel = row.querySelector('.conf-btn[class*="selected-"]');
+    if (sel && sel.className.includes('selected-1')) state.confidence[sk] = 1;
+    else if (sel && sel.className.includes('selected-2')) state.confidence[sk] = 2;
+    else if (sel && sel.className.includes('selected-3')) state.confidence[sk] = 3;
+  });
+  state.notes = document.getElementById('aprilNotes').value;
+  return state;
+}
+
+function applyState(state) {
+  document.querySelectorAll('.skill-row').forEach(row => {
+    const sk = row.dataset.skill;
+    row.querySelector('.skill-check').checked = !!(state.checks && state.checks[sk]);
+    const btns = row.querySelectorAll('.conf-btn');
+    btns.forEach(b => b.className = 'conf-btn');
+    if (state.confidence && state.confidence[sk]) {
+      const lvl = state.confidence[sk];
+      if (btns[lvl - 1]) btns[lvl - 1].className = 'conf-btn selected-' + lvl;
+    }
+  });
+  if (state.notes !== undefined) document.getElementById('aprilNotes').value = state.notes;
+  updateProgress();
+}
+
+async function saveStateQuiet() {
+  if (currentRole !== 'trainee' || !currentTrainee) return;
+  try {
+    updateSaveStatus('Saving...', 'saving');
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'save',
+        name: currentTrainee,
+        data: getState()
+      })
+    });
+    const result = await response.json();
+    if (result.success) {
+      updateSaveStatus('Saved', 'saved');
+    }
+  } catch (e) {
+    updateSaveStatus('Save failed', 'error');
+    console.error('Save error:', e);
+  }
+}
+
+function updateSaveStatus(msg, status) {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.className = 'save-status ' + (status || '');
+}
+
+function startAutoSave() {
+  stopAutoSave();
+  document.addEventListener('change', saveStateQuiet);
+  autoSaveTimer = setInterval(saveStateQuiet, 3000);
+}
+
+function stopAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  document.removeEventListener('change', saveStateQuiet);
+}
+
+// ==================== EMAIL ====================
+function emailToAsh() {
+  const state = getState();
+  const total = document.querySelectorAll('.skill-check').length;
+  const done = document.querySelectorAll('.skill-check:checked').length;
+  const pct = Math.round((done / total) * 100);
+  const confLabels = { 1: 'NEED TRAINING', 2: 'Partially confident', 3: 'Confident' };
+
+  let body = 'Hi Ash,\n\nHere is my training progress update.\n\n';
+  body += 'OVERALL: ' + done + '/' + total + ' skills completed (' + pct + '%)\n\n';
+
+  const needTraining = [];
+  document.querySelectorAll('.skill-row').forEach(row => {
+    const sk = row.dataset.skill;
+    if (state.confidence[sk] === 1) {
+      const name = row.querySelector('.skill-name').textContent;
+      const vid = row.querySelector('[data-video]');
+      needTraining.push(name + (vid ? ' (' + vid.dataset.video + ')' : ''));
+    }
+  });
+  if (needTraining.length > 0) {
+    body += 'AREAS I NEED TRAINING ON (please record these Loom videos first):\n';
+    needTraining.forEach(item => { body += '- ' + item + '\n'; });
+    body += '\n';
+  }
+
+  document.querySelectorAll('.chapter').forEach(ch => {
+    const hdrText = ch.querySelector('.chapter-header h3').textContent.trim().split('(')[0].trim();
+    const t = ch.querySelectorAll('.skill-check').length;
+    const d = ch.querySelectorAll('.skill-check:checked').length;
+    body += hdrText + ': ' + d + '/' + t + '\n';
+    ch.querySelectorAll('.skill-row').forEach(row => {
+      const sk = row.dataset.skill;
+      const name = row.querySelector('.skill-name').textContent;
+      const checked = state.checks[sk] ? '[x]' : '[ ]';
+      const conf = state.confidence[sk] ? confLabels[state.confidence[sk]] : 'Not rated';
+      body += '  ' + checked + ' ' + name + ' - ' + conf + '\n';
+    });
+    body += '\n';
+  });
+
+  if (state.notes.trim()) body += 'MY NOTES / QUESTIONS:\n' + state.notes + '\n\n';
+  body += 'Thanks,\n' + currentTrainee;
+
+  const subject = 'Training Update - ' + currentTrainee + ' at ' + pct + '% - ' + new Date().toLocaleDateString();
+  window.open('mailto:' + ASH_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+  showToast('Opening email to Ash...');
+}
+
+function exportProgress() {
+  const blob = new Blob([JSON.stringify(getState(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = currentTrainee + '-Training-Progress-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  showToast('Progress file exported!');
+}
+
+function importProgress() { document.getElementById('importFile').click(); }
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const state = JSON.parse(e.target.result);
+      applyState(state);
+      const date = state.exportDate ? new Date(state.exportDate).toLocaleString() : 'unknown';
+      showToast('Loaded progress from ' + date);
+    } catch(err) { showToast('Error reading file — is it a valid progress export?'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function saveReviewerNotes() {
+  if (!currentTrainee || !currentRole || currentRole === 'trainee') return;
+  const notes = document.getElementById('reviewerNotes').value;
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'saveReviewerNotes',
+        trainee: currentTrainee,
+        reviewer: currentRole,
+        notes: notes
+      })
+    });
+  } catch (e) {
+    console.error('Error saving reviewer notes:', e);
+  }
+}
+
+function reviewerEmailToAsh() {
+  const state = getState();
+  const total = document.querySelectorAll('.skill-check').length;
+  const done = document.querySelectorAll('.skill-check:checked').length;
+  const pct = Math.round((done / total) * 100);
+  const confLabels = { 1: 'NEED TRAINING', 2: 'Partially confident', 3: 'Confident' };
+
+  let body = 'Hi Ash,\n\nHere are my review notes on ' + currentTrainee + '\'s training progress.\n\n';
+  body += 'CURRENT PROGRESS: ' + done + '/' + total + ' skills completed (' + pct + '%)\n\n';
+
+  const needTraining = [];
+  document.querySelectorAll('.skill-row').forEach(row => {
+    const sk = row.dataset.skill;
+    if (state.confidence[sk] === 1) {
+      needTraining.push(row.querySelector('.skill-name').textContent);
+    }
+  });
+  if (needTraining.length > 0) {
+    body += 'AREAS FLAGGED AS NEEDING TRAINING:\n';
+    needTraining.forEach(item => { body += '- ' + item + '\n'; });
+    body += '\n';
+  }
+
+  const myNotes = document.getElementById('reviewerNotes').value;
+  if (myNotes.trim()) body += 'MY NOTES / FEEDBACK:\n' + myNotes + '\n\n';
+  if (state.notes.trim()) body += currentTrainee + '\'S OWN NOTES:\n' + state.notes + '\n\n';
+  body += 'Thanks,\n' + currentRole;
+
+  const subject = 'Training Review - ' + currentTrainee + ' at ' + pct + '% - ' + new Date().toLocaleDateString();
+  window.open('mailto:' + ASH_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+  showToast('Opening email to Ash...');
+}
+
+function exportReviewerSummary() {
+  const state = getState();
+  const total = document.querySelectorAll('.skill-check').length;
+  const done = document.querySelectorAll('.skill-check:checked').length;
+  const confLabels = { 1: 'NEED TRAINING', 2: 'Partially confident', 3: 'Confident' };
+  let text = '=== REVIEWER SUMMARY — ' + currentTrainee.toUpperCase() + ' ===\n';
+  text += 'Reviewed: ' + new Date().toLocaleString() + '\nOverall: ' + done + '/' + total + ' (' + Math.round(done/total*100) + '%)\n\n';
+  document.querySelectorAll('.chapter').forEach(ch => {
+    text += '--- ' + ch.querySelector('.chapter-header h3').textContent.trim().split('(')[0].trim() + ' ---\n';
+    ch.querySelectorAll('.skill-row').forEach(row => {
+      const sk = row.dataset.skill;
+      const name = row.querySelector('.skill-name').textContent;
+      const checked = state.checks[sk] ? '[x]' : '[ ]';
+      const conf = state.confidence[sk] ? confLabels[state.confidence[sk]] : 'Not rated';
+      text += checked + ' ' + name + ' — ' + conf + '\n';
+    });
+    text += '\n';
+  });
+  const rn = document.getElementById('reviewerNotes').value;
+  if (rn.trim()) text += "=== REVIEWER'S NOTES ===\n" + rn + '\n';
+  if (state.notes.trim()) text += "\n=== " + currentTrainee.toUpperCase() + "'S NOTES ===\n" + state.notes + '\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = currentTrainee + '-Training-Review-' + new Date().toISOString().split('T')[0] + '.txt';
+  a.click();
+  showToast('Review summary exported!');
+}
+
+// ==================== CHAPTER LOCKING ====================
+function checkChapterLocks() {
+  const ch1done = allChecked('recruiting');
+  const ch2done = allChecked('onboarding');
+  const ch3done = allChecked('scheduling');
+  const unlocked = ch1done && ch2done && ch3done;
+
+  const ch4 = document.getElementById('ch4block');
+  const db = document.getElementById('dbblock');
+  if (unlocked) {
+    ch4.classList.remove('chapter-locked');
+    db.classList.remove('chapter-locked');
+  } else {
+    ch4.classList.add('chapter-locked');
+    db.classList.add('chapter-locked');
+  }
+}
+
+function allChecked(chapterName) {
+  const ch = document.querySelector('[data-chapter="' + chapterName + '"]');
+  if (!ch) return false;
+  const checks = ch.querySelectorAll('.skill-check');
+  const done = ch.querySelectorAll('.skill-check:checked');
+  return checks.length > 0 && checks.length === done.length;
+}
+
+const _origUpdateProgress = updateProgress;
+updateProgress = function() {
+  _origUpdateProgress();
+  if (currentRole) checkChapterLocks();
+};
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
