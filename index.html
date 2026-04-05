@@ -10,6 +10,16 @@
   .container { max-width: 960px; margin: 0 auto; }
 
   /* ========== LOGIN SCREEN ========== */
+  .password-screen { max-width: 400px; margin: 120px auto; background: #fff; border-radius: 16px; padding: 40px 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+  .password-screen h1 { font-size: 1.8em; color: #1F4E79; margin-bottom: 4px; }
+  .password-screen h2 { font-size: 1.1em; color: #2E75B6; font-weight: 400; margin-bottom: 24px; }
+  .password-screen .divider { width: 50px; height: 3px; background: #2E75B6; margin: 16px auto 24px; }
+  .password-screen p { color: #666; font-size: 0.88em; margin-bottom: 20px; line-height: 1.5; }
+  .password-screen input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; margin-bottom: 12px; text-align: center; letter-spacing: 2px; }
+  .password-screen input[type="password"]:focus { outline: none; border-color: #2E75B6; box-shadow: 0 0 0 2px rgba(46, 117, 182, 0.1); }
+  .password-screen .pw-btn { width: 100%; padding: 12px 20px; background: #1F4E79; color: #fff; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .password-screen .pw-btn:hover { background: #163859; }
+  .password-screen .pw-error { color: #C62828; font-size: 0.82em; margin-top: 8px; min-height: 1.2em; }
   .login-screen { max-width: 440px; margin: 80px auto; background: #fff; border-radius: 16px; padding: 40px 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
   .login-screen h1 { font-size: 1.8em; color: #1F4E79; margin-bottom: 4px; }
   .login-screen h2 { font-size: 1.1em; color: #2E75B6; font-weight: 400; margin-bottom: 24px; }
@@ -159,8 +169,19 @@
 <!-- Save Status Indicator -->
 <div id="saveStatus" class="save-status">Not connected</div>
 
+<!-- ==================== PASSWORD SCREEN ==================== -->
+<div id="passwordScreen" class="password-screen">
+  <h1>Function Staff</h1>
+  <h2>Training Dashboard</h2>
+  <div class="divider"></div>
+  <p>Enter the team password to continue.</p>
+  <input type="password" id="passwordInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPassword()">
+  <button class="pw-btn" onclick="checkPassword()">Enter</button>
+  <div class="pw-error" id="pwError"></div>
+</div>
+
 <!-- ==================== LOGIN SCREEN ==================== -->
-<div id="loginScreen" class="login-screen">
+<div id="loginScreen" class="login-screen hidden">
   <h1>Function Staff</h1>
   <h2>Training Dashboard</h2>
   <div class="divider"></div>
@@ -398,6 +419,28 @@ let currentRole = null;
 let currentTrainee = null;
 let autoSaveTimer = null;
 const ASH_EMAIL = 'ash@nex.co.nz';
+
+// ==================== PASSWORD GATE ====================
+const SITE_PASSWORD = 'FSTraining2026!';
+
+function checkPassword() {
+  const input = document.getElementById('passwordInput').value;
+  if (input === SITE_PASSWORD) {
+    document.getElementById('passwordScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    sessionStorage.setItem('fs-auth', 'true');
+  } else {
+    document.getElementById('pwError').textContent = 'Incorrect password. Please try again.';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+  }
+}
+
+// Auto-bypass if already authenticated this session
+if (sessionStorage.getItem('fs-auth') === 'true') {
+  document.getElementById('passwordScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
 
 // ==================== LOGIN ====================
 document.querySelectorAll('.role-btn-login').forEach(btn => {
